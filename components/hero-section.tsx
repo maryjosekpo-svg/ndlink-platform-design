@@ -5,13 +5,15 @@ import { ArrowRight, Search, Users, FolderOpen } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? ""
+
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden">
       {/* Hero with background image */}
       <div className="relative h-[600px] lg:h-[700px]">
         <Image
-          src="/images/niger-delta-hero.jpg"
+          src={`${basePath}/images/niger-delta-hero.jpg`}
           alt="Niger Delta communities and waterways"
           fill
           className="object-cover"

@@ -30,27 +30,49 @@ pnpm dev
 
 Open http://localhost:3000.
 
-## Production build
+## Static build
+
+This project uses `output: 'export'`, so `pnpm build` produces a fully static site in `out/`.
+There is no Node server to run in production.
 
 ```bash
-pnpm build
-pnpm start
+pnpm build        # writes out/
+npx serve out     # optional: preview locally
 ```
 
-The app prerenders every route as static content, so it can be hosted anywhere that runs Node.js
-(a VPS, Docker, Railway, Render, Fly.io, etc.).
+The export is plain HTML/CSS/JS and can be hosted on GitHub Pages, Netlify, Cloudflare Pages, S3,
+or any static file server.
 
-### Fully static hosting (optional)
+### Local preview with a base path
 
-Because there are no server-side features, you can export plain HTML and host it on GitHub Pages,
-Netlify, Cloudflare Pages, or any static file server. Add this to `next.config.mjs`:
+GitHub Pages *project* sites are served from `/<repo-name>`, so the build needs to know that
+prefix. `next.config.mjs` reads it from `NEXT_PUBLIC_BASE_PATH`:
 
-```js
-output: 'export',
+```bash
+NEXT_PUBLIC_BASE_PATH=/my-repo pnpm build
 ```
 
-Then run `pnpm build` and deploy the generated `out/` directory. For a GitHub Pages *project*
-site (served from `/<repo-name>`), also set `basePath` and `assetPrefix` to `/<repo-name>`.
+To preview that build locally, serve `out/` from a directory whose name matches the base path:
+
+```bash
+mkdir -p /tmp/preview/my-repo && cp -R out/. /tmp/preview/my-repo/
+npx serve /tmp/preview -l 3000   # open http://localhost:3000/my-repo/
+```
+
+## Deploying to GitHub Pages
+
+A workflow is included at `.github/workflows/deploy.yml`. It builds the site and publishes `out/`
+on every push to `main`, automatically setting the base path to `/<repo-name>` (and leaving it
+empty for `<user>.github.io` repos).
+
+1. Push the repo to GitHub.
+2. In **Settings → Pages**, set **Source** to **GitHub Actions**.
+3. Push to `main` (or run the workflow manually). The site is published at
+   `https://<user>.github.io/<repo>/`.
+
+`public/.nojekyll` is included so GitHub Pages serves the `_next/` assets directory, and
+`trailingSlash: true` produces directory-style URLs (`/about/index.html`) that Pages resolves
+reliably.
 
 ## Project structure
 
@@ -82,7 +104,7 @@ public/         Static assets (images, icons)
 
 ## Notes
 
-- `@vercel/analytics` is included but only reports data when deployed on Vercel. It is safe to
-  leave in place on other hosts, or remove it (`app/layout.tsx` and `package.json`).
+- `@vercel/analytics` was removed since it only reports data on Vercel and would request a
+  missing script on GitHub Pages.
 - `next.config.mjs` currently sets `typescript.ignoreBuildErrors: true` (a v0 default). Type
   checking passes (`npx tsc --noEmit`), so you can remove it to catch type errors during builds.
